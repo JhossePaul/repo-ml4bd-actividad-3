@@ -3,7 +3,7 @@ steps:
     entrypoint: 'pack'
     args:
       - 'build'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/repo-ml/servicio-modelo-ml:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/repo-ml4bd-actividad-3/servicio-modelo-ml:$COMMIT_SHA'
       - '--builder=gcr.io/buildpacks/builder:latest'
       - '--publish'
 
@@ -13,7 +13,7 @@ steps:
       - 'run'
       - 'deploy'
       - 'servicio-modelo-ml'
-      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/repo-ml/servicio-modelo-ml:$COMMIT_SHA'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/repo-ml4bd-actividad-3/servicio-modelo-ml:$COMMIT_SHA'
       - '--region=us-central1'
       - '--allow-unauthenticated'
 
