@@ -86,7 +86,7 @@ def new_model():
 # =========================================================
 # PARÁMETROS
 # =========================================================
-bucket_name = st.text_input("Bucket de GCS:", "bucket_131025")
+bucket_name = st.text_input("Bucket de GCS:", "ml4bd")
 prefix = st.text_input("Prefijo/carpeta:", "tlc_yellow_trips_2022/")
 limite = st.number_input("Filas a procesar por archivo:", value=1000, step=100)
 
@@ -117,31 +117,38 @@ if st.button("Reiniciar entrenamiento y borrar modelo guardado"):
     st.success("Entrenamiento reiniciado correctamente.")
 
 # =========================================================
-# INICIALIZAR SESSION STATE
+# INICIALIZAR SESSION STATE (ESTRUCTURA CORRECTA)
 # =========================================================
 if "model" not in st.session_state:
-
     loaded_model = load_model_from_gcs(bucket_name, MODEL_PATH)
 
     if loaded_model is None:
-        loaded_model = new_model()
+        st.session_state.model = new_model()
+        st.session_state.index = 0
+        st.session_state.processed_files = []
+        st.session_state.history_r2 = []
+        st.session_state.history_mae = []
+        st.session_state.history_file_r2 = []
+        st.session_state.history_file_mae = []
+        st.session_state.blobs = None
+    else:
+        st.session_state.model = loaded_model
 
-    st.session_state.model = loaded_model
+        if "index" not in st.session_state:
+            st.session_state.index = 0 
+        if "processed_files" not in st.session_state:
+            st.session_state.processed_files = []
 
-    # Métricas acumuladas desde que se inicia la app.
-    # Nota: aunque se cargue el modelo, las métricas se reinician,
-    # porque River no guarda aquí el historial de evaluación.
     st.session_state.metric_r2 = metrics.R2()
     st.session_state.metric_mae = metrics.MAE()
 
-    st.session_state.history_r2 = []
-    st.session_state.history_mae = []
-    st.session_state.history_file_r2 = []
-    st.session_state.history_file_mae = []
-    st.session_state.processed_files = []
-
-    st.session_state.blobs = None
-    st.session_state.index = 0
+    if "history_r2" not in st.session_state: st.session_state.history_r2 = []
+    if "history_mae" not in st.session_state: st.session_state.history_mae = []
+    if "history_file_r2" not in st.session_state: st.session_state.history_file_r2 = []
+    if "history_file_mae" not in st.session_state: st.session_state.history_file_mae = []
+    
+    if "blobs" not in st.session_state:
+        st.session_state.blobs = None
 
 model = st.session_state.model
 metric_r2 = st.session_state.metric_r2
