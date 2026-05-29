@@ -313,9 +313,8 @@ def process_single_blob(bucket_name, blob_name, limite=1000, chunksize=500):
         "global_mae": metric_mae.get()
     }
 
-
 # =========================================================
-# BOTÓN: PROCESAR SIGUIENTE ARCHIVO
+# BOTÓN: PROCESAR SIGUIENTE ARCHIVO (CORREGIDO)
 # =========================================================
 st.markdown("---")
 st.subheader("Procesamiento incremental")
@@ -325,18 +324,10 @@ if st.button("Procesar siguiente archivo"):
     if st.session_state.blobs is None:
         client = storage.Client()
         bucket = client.bucket(bucket_name)
-
         blobs = list(bucket.list_blobs(prefix=prefix))
-
-        # Evitar carpetas y archivos que no sean CSV
-        blobs = [
-            b for b in blobs
-            if b.name.endswith(".csv") and not b.name.endswith("/")
-        ]
-
+        blobs = [b for b in blobs if b.name.endswith(".csv") and not b.name.endswith("/")]
         st.session_state.blobs = blobs
         st.session_state.index = 0
-
         st.info(f"Se encontraron {len(blobs)} archivos CSV en `{prefix}`.")
 
     blobs = st.session_state.blobs
@@ -344,7 +335,6 @@ if st.button("Procesar siguiente archivo"):
 
     if idx >= len(blobs):
         st.success("Todos los archivos ya fueron procesados.")
-
     else:
         blob = blobs[idx]
         short = blob.name.split("/")[-1]
@@ -358,28 +348,22 @@ if st.button("Procesar siguiente archivo"):
         )
 
         if result is not None:
-
             st.session_state.history_r2.append(result["global_r2"])
             st.session_state.history_mae.append(result["global_mae"])
-
             st.session_state.history_file_r2.append(result["file_r2"])
             st.session_state.history_file_mae.append(result["file_mae"])
-
             st.session_state.processed_files.append(short)
 
             st.write(f"Registros procesados: **{result['count']}**")
-
             st.write(f"R² del archivo actual: **{result['file_r2']:.4f}**")
             st.write(f"MAE del archivo actual: **{result['file_mae']:.4f}**")
-
-            st.write(f"R² acumulado: **{result['global_r2']:.4f}**")
-            st.write(f"MAE acumulado: **{result['global_mae']:.4f}**")
-
             save_model_to_gcs(model, bucket_name, MODEL_PATH)
-
         else:
-            st.warning("No se procesaron registros válidos en este archivo.")
+            # Si devuelve None, te avisará en rojo pero NO se congelará la app
+            st.error(f"El archivo `{short}` no devolvió registros válidos (¿columnas incorrectas o filtros estrictos?).")
 
+        # CRUCIAL: Este incremento va FUERA del "if result is not None", 
+        # para que el siguiente clic avance al archivo idx + 1 obligatoriamente.
         st.session_state.index += 1
 
 # =========================================================
