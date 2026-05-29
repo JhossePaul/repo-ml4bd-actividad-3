@@ -155,6 +155,20 @@ metric_r2 = st.session_state.metric_r2
 metric_mae = st.session_state.metric_mae
 
 # =========================================================
+# BLOQUE DE DEBUG TEMPORAL (Quitar después)
+# =========================================================
+st.sidebar.subheader("🛠️ Debug de Estado Interno")
+st.sidebar.write(f"¿Existe 'model' en sesión?: `{'model' in st.session_state}`")
+st.sidebar.write(f"Índice actual en sesión: `{st.session_state.index}`")
+if st.sidebar.button("Forzar impresión de variables en consola"):
+    print("=== DEBUG EN CONSOLA DE CLOUD RUN ===")
+    print(f"Index: {st.session_state.index}")
+    print(f"Blobs cargados: {st.session_state.blobs is not None}")
+    print(f"Historial R2: {st.session_state.history_r2}")
+# =========================================================
+
+
+# =========================================================
 # FEATURE ENGINEERING
 # =========================================================
 def _parse_time_fields(row):
