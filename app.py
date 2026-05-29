@@ -324,26 +324,31 @@ if st.button("Procesar siguiente archivo"):
     if st.session_state.blobs is None:
         client = storage.Client()
         bucket = client.bucket(bucket_name)
-        blobs = list(bucket.list_blobs(prefix=prefix))
-        blobs = [b for b in blobs if b.name.endswith(".csv") and not b.name.endswith("/")]
-        st.session_state.blobs = blobs
+        blobs_list = list(bucket.list_blobs(prefix=prefix))
+        
+        # CRUCIAL: Guardamos solo el `.name` (String), NO el objeto blob completo
+        blob_names = [b.name for b in blobs_list if b.name.endswith(".csv") and not b.name.endswith("/")]
+        
+        st.session_state.blobs = blob_names
         st.session_state.index = 0
-        st.info(f"Se encontraron {len(blobs)} archivos CSV en `{prefix}`.")
+        st.info(f"Se encontraron {len(blob_names)} archivos CSV en `{prefix}`.")
 
+    # Ahora blobs es una lista de strings (rutas de archivos)
     blobs = st.session_state.blobs
     idx = st.session_state.index
 
     if idx >= len(blobs):
         st.success("Todos los archivos ya fueron procesados.")
     else:
-        blob = blobs[idx]
-        short = blob.name.split("/")[-1]
+        blob_name = blobs[idx]
+        short = blob_name.split("/")[-1]
 
         st.write(f"Procesando archivo {idx + 1}/{len(blobs)}: `{short}`")
 
+        # Pasamos el blob_name (string) a la función
         result = process_single_blob(
             bucket_name=bucket_name,
-            blob_name=blob.name,
+            blob_name=blob_name,
             limite=int(limite)
         )
 
@@ -359,12 +364,11 @@ if st.button("Procesar siguiente archivo"):
             st.write(f"MAE del archivo actual: **{result['file_mae']:.4f}**")
             save_model_to_gcs(model, bucket_name, MODEL_PATH)
         else:
-            # Si devuelve None, te avisará en rojo pero NO se congelará la app
-            st.error(f"El archivo `{short}` no devolvió registros válidos (¿columnas incorrectas o filtros estrictos?).")
+            st.error(f"El archivo `{short}` no devolvió registros válidos.")
 
-        # CRUCIAL: Este incremento va FUERA del "if result is not None", 
-        # para que el siguiente clic avance al archivo idx + 1 obligatoriamente.
+        # Incrementamos el índice de manera segura
         st.session_state.index += 1
+
 
 # =========================================================
 # ESTADO ACTUAL
